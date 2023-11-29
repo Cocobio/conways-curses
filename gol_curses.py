@@ -20,11 +20,10 @@ def draw_frame(pad, width: int, height: int,
 
 def draw_boolean_matrix(pad, matrix, old_matrix, width: int, height: int,
                         x_offset: int = 0, y_offset: int = 0):
-    for i in range(width):
-        for j in range(height):
-            if matrix[i][j] != old_matrix[i][j]:
-                pad.addch(j + y_offset, i + x_offset,
-                          "" if matrix[i][j] else " ")
+    for i, j in ((i, j) for i in range(width) for j in range(height)):
+        if matrix[i][j] != old_matrix[i][j]:
+            pad.addch(j + y_offset, i + x_offset,
+                      "" if matrix[i][j] else " ")
 
 
 def main(stdscr):
@@ -34,9 +33,12 @@ def main(stdscr):
     # Game of life class
     N, M = curses.COLS-2, curses.LINES-3
     gol_data = GOL((N, M))
+    game_running = False
 
     curses.cbreak()
     curses.curs_set(0)
+
+    stdscr.nodelay(True)
 
     # Use of colors, if not included termux glitches
     if curses.has_colors():
@@ -49,10 +51,12 @@ def main(stdscr):
     while running:
         draw_boolean_matrix(stdscr, gol_data.gen, gol_data.old_gen,
                             gol_data.width, gol_data.height, 1, 1)
-        # key = stdscr.getkey()
+        key = stdscr.getch()
 
-        # if key == "q":
-        #     running = False
+        if key == ord('q'):
+            running = False
+        elif key == ord('s'):
+            game_running = not game_running
         # elif key == "h":
         #     pass
         # elif key == "j":
@@ -65,7 +69,9 @@ def main(stdscr):
         stdscr.refresh()
 
         sleep(0.2)
-        gol_data.next_gen()
+        
+        if (game_running):
+            gol_data.next_gen()
 
 
 if __name__ == "__main__":

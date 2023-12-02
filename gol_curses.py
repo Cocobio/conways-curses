@@ -1,6 +1,7 @@
 import curses
 from gol import GOL
 from time import sleep
+import gui
 
 running = True
 
@@ -30,10 +31,15 @@ def main(stdscr):
     global running
     stdscr.clear()
 
+    # Gui
+    gui.init()
+
     # Game of life class
     N, M = curses.COLS-2, curses.LINES-3
     gol_data = GOL((N, M))
     game_running = False
+    w_offset = 0
+    h_offset = 0
 
     curses.cbreak()
     curses.curs_set(0)
@@ -43,35 +49,54 @@ def main(stdscr):
     # Use of colors, if not included termux glitches
     if curses.has_colors():
         curses.use_default_colors()
+        curses.start_color()
 
     stdscr.clear()
     draw_frame(stdscr, gol_data.width+2, gol_data.height+2)
     # stdscr.border("│", "│", "─", "─", "╭", "╮", "╰", "╯")
     # stdscr.border("|", "|", "-", "-")
     while running:
-        draw_boolean_matrix(stdscr, gol_data.gen, gol_data.old_gen,
-                            gol_data.width, gol_data.height, 1, 1)
         key = stdscr.getch()
 
         if key == ord('q'):
             running = False
         elif key == ord('s'):
+            if not game_running:
+                gol_data = GOL((gui.columns, gui.rows))
+                w_offset = (curses.COLS-gui.columns-2)//2
+                h_offset = (curses.LINES-gui.rows-3)//2
+            else:
+                gol_data = GOL((N, M))
+                w_offset = 0
+                h_offset = 0
             game_running = not game_running
-        # elif key == "h":
-        #     pass
-        # elif key == "j":
-        #     pass
-        # elif key == "k":
-        #     pass
-        # elif key == "l":
-        #     pass
+            stdscr.clear()
+            draw_frame(stdscr, gol_data.width+2, gol_data.height+2,
+                       w_offset, h_offset)
+        elif key == ord("h"):
+            if not game_running:
+                gui.sub_sel_opt()
+        elif key == ord("j"):
+            if not game_running:
+                gui.add_sel()
+        elif key == ord("k"):
+            if not game_running:
+                gui.sub_sel()
+        elif key == ord("l"):
+            if not game_running:
+                gui.add_sel_opt()
 
         stdscr.refresh()
 
         sleep(0.2)
-        
+
         if (game_running):
+            draw_boolean_matrix(stdscr, gol_data.gen, gol_data.old_gen,
+                                gol_data.width, gol_data.height,
+                                w_offset+1, h_offset+1)
             gol_data.next_gen()
+        else:
+            gui.print_gui(stdscr)
 
 
 if __name__ == "__main__":
